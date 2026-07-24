@@ -1,0 +1,108 @@
+def calculate_advanced_tax(salary, dividends):
+    print("\n" + "="*45)
+    print(" 🧾 ADVANCED TAX & NIC LIABILITY REPORT")
+    print("="*45)
+
+    # --- 1. STATUTORY VARIABLES & ASSUMPTIONS ---
+    standard_pa = 12570
+    basic_band_limit = 37700
+    higher_band_limit = 125140 # (Standard PA + Basic Band)
+    
+    div_allowance = 500
+    
+    # NIC Thresholds (Class 1 Primary)
+    nic_primary_threshold = 12570
+    nic_upper_limit = 50270
+
+    # --- 2. NATIONAL INSURANCE (Applies to Salary Only) ---
+    nic_total = 0
+    if salary > nic_upper_limit:
+        # 8% between Primary and Upper, 2% above Upper
+        nic_total = ((nic_upper_limit - nic_primary_threshold) * 0.08) + ((salary - nic_upper_limit) * 0.02)
+    elif salary > nic_primary_threshold:
+        nic_total = (salary - nic_primary_threshold) * 0.08
+
+    # --- 3. PERSONAL ALLOWANCE TAPER ---
+    total_income = salary + dividends
+    if total_income > 100000:
+        reduction = (total_income - 100000) / 2
+        pa = max(0, standard_pa - reduction)
+    else:
+        pa = standard_pa
+
+    # --- 4. ALLOCATE INCOME STACK ---
+    # PA is applied to non-savings income (salary) first
+    taxable_salary = max(0, salary - pa)
+    
+    # Any leftover PA goes to dividends
+    remaining_pa = max(0, pa - salary)
+    taxable_dividends_gross = max(0, dividends - remaining_pa)
+    
+    # Apply Dividend Allowance (£500 tax-free)
+    taxable_dividends = max(0, taxable_dividends_gross - div_allowance)
+
+    # --- 5. CALCULATE SALARY TAX ---
+    salary_tax = 0
+    basic_band_used = 0
+    higher_band_used = 0
+
+    if taxable_salary > 0:
+        # Basic Rate (20%)
+        salary_basic = min(taxable_salary, basic_band_limit)
+        salary_tax += salary_basic * 0.20
+        basic_band_used = salary_basic
+        
+        # Higher Rate (40%)
+        if taxable_salary > basic_band_limit:
+            salary_higher = min(taxable_salary - basic_band_limit, higher_band_limit - basic_band_limit)
+            salary_tax += salary_higher * 0.40
+            higher_band_used = salary_higher
+            
+        # Additional Rate (45%)
+        if taxable_salary > higher_band_limit:
+            salary_tax += (taxable_salary - higher_band_limit) * 0.45
+
+    # --- 6. CALCULATE DIVIDEND TAX (Sits on top of salary) ---
+    dividend_tax = 0
+    if taxable_dividends > 0:
+        
+        # Calculate remaining space in the Basic Rate band
+        basic_band_remaining = max(0, basic_band_limit - basic_band_used)
+        div_basic = min(taxable_dividends, basic_band_remaining)
+        dividend_tax += div_basic * 0.0875  # Dividend Basic Rate (8.75%)
+        
+        # Calculate remaining space in Higher Rate band
+        remaining_divs_after_basic = taxable_dividends - div_basic
+        higher_band_capacity = (higher_band_limit - basic_band_limit) - higher_band_used
+        div_higher = min(remaining_divs_after_basic, max(0, higher_band_capacity))
+        dividend_tax += div_higher * 0.3375  # Dividend Higher Rate (33.75%)
+        
+        # Additional Rate for everything else
+        div_additional = remaining_divs_after_basic - div_higher
+        if div_additional > 0:
+            dividend_tax += div_additional * 0.3935 # Dividend Add. Rate (39.35%)
+
+    # --- 7. OUTPUT TOTALS ---
+    total_tax = salary_tax + dividend_tax
+    total_deductions = total_tax + nic_total
+    take_home = total_income - total_deductions
+
+    print(f"Gross Salary:           £{salary:,.2f}")
+    print(f"Gross Dividends:        £{dividends:,.2f}")
+    print(f"Personal Allowance:     £{pa:,.2f} (Applied to Salary first)")
+    print("-" * 45)
+    print(f"Class 1 NICs:           £{nic_total:,.2f}")
+    print(f"Income Tax (Salary):    £{salary_tax:,.2f}")
+    print(f"Income Tax (Dividends): £{dividend_tax:,.2f}")
+    print("-" * 45)
+    print(f"TOTAL DEDUCTIONS:       £{total_deductions:,.2f}")
+    print(f"NET TAKE-HOME PAY:      £{take_home:,.2f}")
+    print("="*45 + "\n")
+
+# Run the program
+try:
+    user_salary = float(input("Enter annual gross salary (£): "))
+    user_dividends = float(input("Enter annual dividend income (£): "))
+    calculate_advanced_tax(user_salary, user_dividends)
+except ValueError:
+    print("Error: Please enter valid numbers.")
