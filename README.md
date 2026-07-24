@@ -17,7 +17,3 @@ Built in parallel with my ACCA Taxation (TX) studies, this project translates co
 * **Language:** Python 3
 * **Concepts:** Advanced conditional logic, algorithm design, financial modeling.
 
-## 🚀 How to Run
-1. Clone the repository.
-2. Run `python tax_calculator.py` in your terminal.
-3. Input your gross salary and dividend figures when prompted.
